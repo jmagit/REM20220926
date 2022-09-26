@@ -12,6 +12,12 @@
 
 ## Servidores en Docker
 
+### Bases de datos
+
+- docker run -d --name mysql-sakila -e MYSQL_ROOT_PASSWORD=root -p 3306:3306 jamarton/mysql-sakila
+- docker run -d --name mongodb -p 27017:27017 mongo
+- docker run --name redis -p 6379:6379 -d redis
+
 ### Mensajería (Rabbitmq/Kafka)
 
 - docker run -d --hostname rabbitmq --name rabbitmq -p 4369:4369 -p 5671:5671 -p 5672:5672 -p 15671:15671 -p 15672:15672 -p 25672:25672 -e RABBITMQ_DEFAULT_USER=admin -e RABBITMQ_DEFAULT_PASS=curso rabbitmq:management-alpine
