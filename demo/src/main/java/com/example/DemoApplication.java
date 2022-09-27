@@ -1,9 +1,12 @@
 package com.example;
 
+import javax.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.domain.Sort;
 
 import com.example.domains.contracts.repositories.ActorRepository;
 import com.example.domains.entities.Actor;
@@ -19,6 +22,7 @@ public class DemoApplication implements CommandLineRunner {
 	ActorRepository dao;
 	
 	@Override
+	@Transactional
 	public void run(String... args) throws Exception {
 //		System.out.println("Hola mundo");
 //		dao.findAll().forEach(System.out::println);
@@ -40,8 +44,21 @@ public class DemoApplication implements CommandLineRunner {
 //		} else {
 //			System.out.println("No encontrado");
 //		}
-		dao.deleteById(204);
-		dao.findAll().forEach(System.out::println);
+//		dao.deleteById(204);
+//		dao.findTop10ByFirstNameStartingWithOrderByLastNameDesc("P").forEach(System.out::println);
+//		dao.findTop10ByFirstNameStartingWith("P", Sort.by("firstName")).forEach(System.out::println);
+//		dao.findByActorIdGreaterThan(200).forEach(System.out::println);
+//		dao.recuperaNuevosJPQL(200).forEach(System.out::println);
+//		dao.recuperaNuevosSQL(200).forEach(System.out::println);
+//		dao.findAll((root, query, builder) -> builder.lessThan(root.get("actorId"), 200)).forEach(System.out::println);
+		var item = dao.findById(1);
+		if(item.isPresent()) {
+			System.out.println(item.get());
+			item.get().getFilmActors().forEach(ele -> System.out.println(ele.getFilm().getTitle()));
+		} else {
+			System.out.println("No encontrado");
+		}
+		
 	}
 
 }
