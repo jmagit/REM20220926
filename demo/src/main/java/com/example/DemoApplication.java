@@ -6,10 +6,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
 import com.example.domains.contracts.repositories.ActorRepository;
+import com.example.domains.contracts.services.ActorService;
 import com.example.domains.entities.Actor;
+import com.example.domains.entities.dtos.ActorDto;
+import com.example.domains.entities.dtos.ActorShortDto;
 
 @SpringBootApplication
 public class DemoApplication implements CommandLineRunner {
@@ -20,6 +24,8 @@ public class DemoApplication implements CommandLineRunner {
 
 	@Autowired
 	ActorRepository dao;
+	@Autowired
+	ActorService srv;
 	
 	@Override
 	@Transactional
@@ -58,12 +64,22 @@ public class DemoApplication implements CommandLineRunner {
 //		} else {
 //			System.out.println("No encontrado");
 //		}
-		var item = new Actor(0, null, "12345678Z");
-		if(item.isInvalid())
-			System.out.println(item.getErrorsMessage());
-		else
-			dao.save(item);
-		
+//		var item = new Actor(0, null, "12345678Z");
+//		if(item.isInvalid())
+//			System.out.println(item.getErrorsMessage());
+//		else
+//			dao.save(item);
+//		dao.findAll(PageRequest.of(1, 10)).getContent().forEach(System.out::println);
+//		dao.findAll().forEach(ele -> System.out.println(ActorDto.from(ele)));
+//		var dto = new ActorDto(111, "kk", "kkkk");
+//		var item = ActorDto.from(dto);
+//		if(item.isInvalid())
+//			System.out.println(item.getErrorsMessage());
+//		dao.recuperaDtos(190).forEach(System.out::println);
+//		dao.recuperaShort(190).forEach(ele -> System.out.println(ele.getId() + " " + ele.getNombre()));
+//		dao.findByActorIdIsNotNull(ActorDto.class).forEach(System.out::println);
+//		dao.findByActorIdIsNotNull(ActorShortDto.class).forEach(ele -> System.out.println(ele.getId() + " " + ele.getNombre()));
+		srv.getByProjection(ActorShortDto.class).forEach(ele -> System.out.println(ele.getId() + " " + ele.getNombre()));
 	}
 
 }
