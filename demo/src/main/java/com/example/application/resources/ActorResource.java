@@ -2,12 +2,15 @@ package com.example.application.resources;
 import java.net.URI;
 import java.util.List;
 
+import javax.transaction.Transactional;
 import javax.validation.ConstraintViolation;
 import javax.validation.Valid;
 import javax.validation.Validator;
 import javax.websocket.server.PathParam;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -41,6 +44,11 @@ public class ActorResource {
 	public List<ActorDto> getAll() {
 		return srv.getByProjection(ActorDto.class);
 	}
+	
+	@GetMapping(params = "page")
+	public Page<ActorDto> getAll(Pageable page) {
+		return srv.getByProjection(page, ActorDto.class);
+	}
 
 	@GetMapping(path = "/{id}")
 	public ActorDto getOne(@PathVariable int id) throws NotFoundException {
@@ -48,6 +56,23 @@ public class ActorResource {
 		if(item.isEmpty())
 			throw new NotFoundException();
 		return ActorDto.from(item.get());
+	}
+	@GetMapping(path = "/{id}/pelis")
+	@Transactional
+	public List<String> getPelis(@PathVariable int id) throws NotFoundException {
+		var item = srv.getOne(id);
+		if(item.isEmpty())
+			throw new NotFoundException();
+		return item.get().getFilmActors().stream().map(ele -> ele.getFilm().getTitle()).toList();
+	}
+	@PutMapping(path = "/{id}/jubilacion")
+	@Transactional
+	@ResponseStatus(HttpStatus.ACCEPTED)
+	public void jubilate(@PathVariable int id) throws NotFoundException {
+		var item = srv.getOne(id);
+		if(item.isEmpty())
+			throw new NotFoundException();
+		item.get().jubilate();
 	}
 	
 	@PostMapping
@@ -72,5 +97,6 @@ public class ActorResource {
 	public void delete(@PathVariable int id) {
 		srv.deleteById(id);
 	}
+
 
 }
