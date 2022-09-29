@@ -1,6 +1,10 @@
-package com.example.application.resources;
+package com.example.application.resource;
+
 import java.net.URI;
+import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
 import javax.validation.ConstraintViolation;
@@ -8,9 +12,12 @@ import javax.validation.Valid;
 import javax.validation.Validator;
 import javax.websocket.server.PathParam;
 
+import org.springdoc.api.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,76 +27,70 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.example.domains.contracts.services.ActorService;
-import com.example.domains.entities.Actor;
-import com.example.domains.entities.dtos.ActorDto;
-import com.example.domains.entities.dtos.KeyValueDto;
+import com.example.domains.entities.dtos.ActorDTO;
+import com.example.domains.entities.dtos.FilmShortDTO;
 import com.example.exceptions.BadRequestException;
 import com.example.exceptions.DuplicateKeyException;
 import com.example.exceptions.InvalidDataException;
 import com.example.exceptions.NotFoundException;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+
 import org.springframework.http.HttpStatus;
 
 @RestController
-@RequestMapping("/api/v1/actores")
+@RequestMapping(path = "/v1/actores")
+@SecurityRequirement(name = "bearerAuth")
 public class ActorResource {
 	@Autowired
 	ActorService srv;
 	
 	@GetMapping
-	public List<ActorDto> getAll() {
-		return srv.getByProjection(ActorDto.class);
+	public List<ActorDTO> getAll(@ParameterObject @RequestParam(required = false) String sort) {
+		if(sort== null)
+			return srv.getByProjection(ActorDTO.class);
+		else
+			return (List<ActorDTO>) srv.getByProjection(Sort.by(sort), ActorDTO.class);
 	}
 	
 	@GetMapping(params = "page")
-	public Page<ActorDto> getAll(Pageable page) {
-		return srv.getByProjection(page, ActorDto.class);
+	public Page<ActorDTO> getAllPageable(@ParameterObject Pageable pageable) {
+		return srv.getByProjection(pageable, ActorDTO.class);
 	}
 
 	@GetMapping(path = "/{id}")
-	public ActorDto getOne(@PathVariable int id) throws NotFoundException {
-		var item = srv.getOne(id);
-		if(item.isEmpty())
+	public ActorDTO getOne(@PathVariable int id, Principal principal) throws NotFoundException {
+		var actor = srv.getOne(id);
+		if(actor.isEmpty())
 			throw new NotFoundException();
-		return ActorDto.from(item.get());
-	}
-	
-	@GetMapping(path = "/{id}/pelis")
-	@Transactional
-	public List<String> getPelis(@PathVariable int id) throws NotFoundException {
-		var item = srv.getOne(id);
-		if(item.isEmpty())
-			throw new NotFoundException();
-		return item.get().getFilmActors().stream().map(ele -> ele.getFilm().getTitle()).toList();
+		else
+			return ActorDTO.from(actor.get());
 	}
 	
 	@GetMapping(path = "/{id}/peliculas")
 	@Transactional
-	public List<KeyValueDto<Integer, String>> getPeliculas(@PathVariable int id) throws NotFoundException {
-		var item = srv.getOne(id);
-		if(item.isEmpty())
+	public List<FilmShortDTO> getPelis(@PathVariable int id) throws NotFoundException {
+		var actor = srv.getOne(id);
+		if(actor.isEmpty())
 			throw new NotFoundException();
-		return item.get().getFilmActors().stream().map(p -> new KeyValueDto<>(p.getFilm().getFilmId(), p.getFilm().getTitle())).toList();
-	}
-	
-	@PutMapping(path = "/{id}/jubilacion")
-	@Transactional
-	@ResponseStatus(HttpStatus.ACCEPTED)
-	public void jubilate(@PathVariable int id) throws NotFoundException {
-		var item = srv.getOne(id);
-		if(item.isEmpty())
-			throw new NotFoundException();
-		item.get().jubilate();
+		else {
+			return (List<FilmShortDTO>) actor.get().getFilmActors().stream()
+					.map(item -> FilmShortDTO.from(item.getFilm()))
+					.collect(Collectors.toList());
+		}
 	}
 	
 	@PostMapping
-	public ResponseEntity<Object> create(@Valid @RequestBody ActorDto item) throws BadRequestException, DuplicateKeyException, InvalidDataException {
-		var newItem = srv.add(ActorDto.from(item));
+	public ResponseEntity<Object> create(@Valid @RequestBody ActorDTO item) throws BadRequestException, DuplicateKeyException, InvalidDataException {
+		if(item == null)
+			throw new BadRequestException("Faltan los datos");
+		var newItem = srv.add(ActorDTO.from(item));
 		URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
 			.buildAndExpand(newItem.getActorId()).toUri();
 		return ResponseEntity.created(location).build();
@@ -97,11 +98,13 @@ public class ActorResource {
 	}
 
 	@PutMapping("/{id}")
-	@ResponseStatus(HttpStatus.NO_CONTENT)
-	public void update(@PathVariable int id, @Valid @RequestBody ActorDto item) throws BadRequestException, NotFoundException, InvalidDataException {
+	//@ResponseStatus(HttpStatus.NO_CONTENT)
+	public ActorDTO update(@PathVariable int id, @Valid @RequestBody ActorDTO item) throws BadRequestException, NotFoundException, InvalidDataException {
+		if(item == null)
+			throw new BadRequestException("Faltan los datos");
 		if(id != item.getActorId())
 			throw new BadRequestException("No coinciden los identificadores");
-		srv.modify(ActorDto.from(item));
+		return ActorDTO.from(srv.modify(ActorDTO.from(item)));	
 	}
 
 	@DeleteMapping("/{id}")
@@ -109,6 +112,5 @@ public class ActorResource {
 	public void delete(@PathVariable int id) {
 		srv.deleteById(id);
 	}
-
 
 }
