@@ -2,6 +2,7 @@ package com.example.domains.entities;
 
 import java.io.Serializable;
 import javax.persistence.*;
+import javax.validation.constraints.NotBlank;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -32,6 +33,7 @@ public class Category implements Serializable {
 
 	@Column(nullable=false, length=25)
 	@JsonProperty("category")
+	@NotBlank
 	private String name;
 
 	//bi-directional many-to-one association to FilmCategory

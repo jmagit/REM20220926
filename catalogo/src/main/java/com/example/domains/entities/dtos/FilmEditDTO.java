@@ -5,8 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 
 import com.example.domains.entities.Actor;
 import com.example.domains.entities.Category;
@@ -27,7 +29,7 @@ import lombok.NoArgsConstructor;
 public class FilmEditDTO {
 	@Schema(description = "Identificador de la pelicula", required = true, accessMode = AccessMode.READ_ONLY)
 	private int filmId;
-	@Schema(description = "Una breve descripción o resumen de la trama de la película")
+	@Schema(description = "Una breve descripción o resumen de la trama de la película", minLength = 2)
 	private String description;
 	@Schema(description = "La duración de la película, en minutos", required = true)
 	private int length;
@@ -44,6 +46,8 @@ public class FilmEditDTO {
 	@Schema(description = "El importe cobrado al cliente si la película no se devuelve o se devuelve en un estado dañado")
 	private BigDecimal replacementCost;
 	@Schema(description = "El título de la película", required = true)
+	@NotBlank
+	@Size(min=2, max = 128)
 	private String title;
 	@Schema(description = "El identificador del idioma de la película")
 	@NotNull
