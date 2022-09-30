@@ -80,6 +80,7 @@ public class ContactoResource {
 	}
 
 	@Secured({ "ROLE_USER" })
+	@PreAuthorize("isAuthenticated()")
 	@PutMapping(path = "/{id}")
 	@Operation(summary = "Modificación de un contacto")
 	@SecurityRequirement(name = "bearerAuth")

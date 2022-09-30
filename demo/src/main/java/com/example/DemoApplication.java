@@ -6,8 +6,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.context.annotation.Bean;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.web.client.RestTemplate;
 
 import com.example.domains.contracts.repositories.ActorRepository;
 import com.example.domains.contracts.services.ActorService;
@@ -15,18 +20,26 @@ import com.example.domains.entities.Actor;
 import com.example.domains.entities.dtos.ActorDto;
 import com.example.domains.entities.dtos.ActorShortDto;
 
+@EnableEurekaClient
 @SpringBootApplication
+@EnableFeignClients("com.example.application.proxies")
 public class DemoApplication implements CommandLineRunner {
 
 	public static void main(String[] args) {
 		SpringApplication.run(DemoApplication.class, args);
 	}
 
+	@LoadBalanced
+	@Bean
+	RestTemplate restTemplate() {
+		return new RestTemplate();
+	}
+
 	@Autowired
 	ActorRepository dao;
 	@Autowired
 	ActorService srv;
-	
+
 	@Override
 	@Transactional
 	public void run(String... args) throws Exception {
